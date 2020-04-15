@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Tarefas</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+
+    
+
+</head>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+                  
+    }
+   
+
+    .form {        
+        margin: auto auto;
+        width: 500px;
+    }
+
+</style>
+
+<body>
+    <div style="background: burlywood;";">
+    <div>
+    <h1 style="text-align: center;">Lista de Tarefas</h1>
+    <form class="form" name="form" id="form">
+
+        <input style="display: none;" type="text" value="" class="form-control" type="text" name="id" id="id" />
+
+        <span class="label">Nome</span>
+        <input type="text" value="Titulo" class="form-control" type="text" name="name" id="name" />
+
+        <span class="label">Descrição</span>
+        <input type="text" value="Descrição" class="form-control" type="text" name="description" id="description" />
+
+        <span class="label">Data inicial</span>
+        <input type="text" value="2020-01-01" class="form-control" type="date" name="start_date" id="start_date" />
+
+        <span class="label">Data Final</span>
+        <input type="text" value="2020-03-28" class="form-control" type="date" name="end_date" id="end_date" />
+
+        <span class="label">Prioridade</span>
+        <select class="custom-select" id="priority" name="priority">
+            <option value="NORMAL" selected>Normal</option>
+            <option value="URGENTE"><b>Urgente</b></option>
+        </select>
+        <button style="float:right;margin-top: 15px;" class="btn btn-primary" id="btn"> Salvar </button>
+        <ul style="margin-top: 8em;" id="lista" class="list-group">
+            <li class="list-group-item">Teste2020</li>
+            <li class="list-group-item">Teste2020</li>
+            <li class="list-group-item">Teste2020</li>
+            <li class="list-group-item">Teste2020</li>
+            <li class="list-group-item">Teste2020</li>
+        </ul>
+
+
+    </form>
+</div>
+</div>
+    
+    <script>
+        const form = document.querySelector("#form");
+        const btn = document.querySelector("#form");
+        const lista = document.querySelector("#lista");
+        const refId = document.querySelector("#id");
+
+        const limpar = () => {
+            document.getElementById("name").value = "";
+            document.getElementById("description").value = "";
+            document.getElementById("start_date").value = "";
+            document.getElementById("end_date").value = "";
+            document.getElementById("priority").value = "";
+        }
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            btn.classList.add("disabled");
+
+            const elements = e.target.elements;
+            var obj = {};
+            for (var i = 0; i < elements.length; i++) {
+                var item = elements.item(i);
+                if (item.value) {
+                    obj[item.name] = item.value;
+                }
+            }
+
+            axios.post("/save", obj).then(function () {
+                btn.classList.remove("disabled");
+                refId.value = "";
+                listarTarefas();
+                limpar();
+            }).catch(function () {
+                btn.classList.remove("disabled");
+                refId.value = "";
+                limpar();
+            })
+        });
+
+        let tasks = [];
+        const listarTarefas = () => {
+            axios.get("/all").then(function (response) {
+                tasks = response.data;
+                lista.innerHTML = response.data.reduce((prev, cur) => {
+                    prev += `  <li class="list-group-item" > ${cur.name} &nbsp; <button onClick="editar(${cur.id})" >editar</button> <button onClick="excluir(${cur.id})" >excluir</button> </li>`
+                    return prev;
+                }, "");
+            }).catch(function () {
+                btn.classList.remove("disabled");
+            })
+        }
+        listarTarefas();
+
+        const editar = (id) => {
+            refId.value = id;
+            let task = tasks.find(task => task.id == id);
+            Object.keys(task).forEach(k => {
+                console.log(k)
+                console.log(document.getElementById(k))
+                document.getElementById(k).value = task[k];
+            });
+        }
+
+        const excluir = (id) => {
+            axios.post("/delete", {id}).then(function() {
+                listarTarefas();
+            });
+        }
+    </script>
+</body>
+
+</html>
